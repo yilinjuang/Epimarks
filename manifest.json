@@ -4,6 +4,7 @@
   "description": "Easily update bookmarks of episode-like websites.",
   "permissions": [
     "bookmarks",
+    "storage",
     "tabs"
   ],
   "background": {

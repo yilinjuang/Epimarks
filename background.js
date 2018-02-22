@@ -2,7 +2,6 @@
 
 // TODO: right-click edit/remove rule, rule page, storage
 
-let rules = new Map();  // Map of regexp rule to bookmark id.
 let currentTabId = "";  // Current tab id of activated tab.
 let currentBmId = "";   // Current bookmark id of activated tab.
 let listening = false;
@@ -26,26 +25,34 @@ chrome.tabs.onCreated.addListener(tab => {
     anotherEpisodeTab = tab;
 });
 
+chrome.storage.onChanged.addListener((changes, area) => {
+    console.debug(area + " changed");
+    console.debug(changes);
+});
+
 function resolveBmId(tabId) {
     return new Promise(resolve => {
         unstarIcon();
         chrome.browserAction.setBadgeText({text: ""});
         chrome.tabs.get(tabId, tab => {
-            console.log(tab.url);
+            console.debug(tab.url);
             let url = tab.url.toLowerCase();
-            for (let [re, bmId] of rules) {
-                if (re.test(url)) {
-                    resolve(bmId);
-                    chrome.bookmarks.get(bmId, nodes => {
-                        if (nodes[0].url.toLowerCase() !== url) {  // New episode ready for update.
-                            chrome.browserAction.setBadgeText({text: " "});
-                        }
-                    });
-                    starIcon();
-                    return;
+            chrome.storage.local.get(null, items => {
+                for (let [r, bmId] of Object.entries(items)) {
+                    let re = new RegExp(r.substring(1, r.length-1));  // Deserialize regexp object.
+                    if (re.test(url)) {
+                        resolve(bmId);
+                        chrome.bookmarks.get(bmId, nodes => {
+                            if (nodes[0].url.toLowerCase() !== url) {  // New episode ready for update.
+                                chrome.browserAction.setBadgeText({text: " "});
+                            }
+                        });
+                        starIcon();
+                        return;
+                    }
                 }
-            }
-            resolve("");
+                resolve("");
+            });
         });
     });
 }
@@ -89,10 +96,11 @@ chrome.browserAction.onClicked.addListener(tab => {
                         title: tab.title,
                         url: tab.url
                     }, node => {
-                        rules.set(re, node.id);
+                        let item = {};
+                        item[re] = node.id;
+                        chrome.storage.local.set(item);
                         currentBmId = node.id;
                         starIcon();
-                        console.log(rules);
                     });
                 } else {
                     alert("Track failed")
@@ -103,7 +111,6 @@ chrome.browserAction.onClicked.addListener(tab => {
                 listening = false;
                 clearInterval(check);
             } else {
-                console.log(checkTimes);
                 checkTimes += 1;
                 if (checkTimes === 20) {
                     // Stop checking.
@@ -113,7 +120,7 @@ chrome.browserAction.onClicked.addListener(tab => {
             }
         }, 500);
     } else {  // Tracked series.
-        console.log("Bookmark " + currentBmId + " is updated")
+        console.debug("Bookmark " + currentBmId + " is updated")
         chrome.browserAction.setBadgeText({text: ""});
         chrome.bookmarks.update(currentBmId, {
             title: tab.title,
