@@ -30,7 +30,7 @@ chrome.storage.onChanged.addListener((changes, area) => {
     console.debug(changes);
 });
 
-function resolveBmExistence(bmId) {
+function resolveBmExistence(url, bmId) {
     return new Promise(resolve => {
         chrome.bookmarks.get(bmId, nodes => {
             if (chrome.runtime.lastError !== undefined) {
@@ -56,7 +56,7 @@ function resolveBmId(tabId) {
                 for (let [r, bmId] of Object.entries(items)) {
                     let re = new RegExp(r.substring(1, r.length-1));  // Deserialize regexp object.
                     if (re.test(url)) {  // Regexp matches the url (this page).
-                        if (await resolveBmExistence(bmId)) {
+                        if (await resolveBmExistence(url, bmId)) {
                             resolve(bmId);
                             starIcon();
                             return;
