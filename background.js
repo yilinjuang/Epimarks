@@ -1,6 +1,6 @@
 "use strict";
 
-// TODO: right-click edit/remove rule, rule page, storage
+// TODO: right-click edit/remove rule, rule page
 
 let currentTabId = "";  // Current tab id of activated tab.
 let currentBmId = "";   // Current bookmark id of activated tab.
@@ -30,6 +30,21 @@ chrome.storage.onChanged.addListener((changes, area) => {
     console.debug(changes);
 });
 
+function resolveBmExistence(bmId) {
+    return new Promise(resolve => {
+        chrome.bookmarks.get(bmId, nodes => {
+            if (chrome.runtime.lastError !== undefined) {
+                resolve(false);
+                return;
+            }
+            if (nodes[0].url.toLowerCase() !== url) {  // New episode ready for update.
+                chrome.browserAction.setBadgeText({text: " "});
+            }
+            resolve(true);
+        });
+    });
+}
+
 function resolveBmId(tabId) {
     return new Promise(resolve => {
         unstarIcon();
@@ -37,18 +52,17 @@ function resolveBmId(tabId) {
         chrome.tabs.get(tabId, tab => {
             console.debug(tab.url);
             let url = tab.url.toLowerCase();
-            chrome.storage.local.get(null, items => {
+            chrome.storage.local.get(null, async function(items) {
                 for (let [r, bmId] of Object.entries(items)) {
                     let re = new RegExp(r.substring(1, r.length-1));  // Deserialize regexp object.
-                    if (re.test(url)) {
-                        resolve(bmId);
-                        chrome.bookmarks.get(bmId, nodes => {
-                            if (nodes[0].url.toLowerCase() !== url) {  // New episode ready for update.
-                                chrome.browserAction.setBadgeText({text: " "});
-                            }
-                        });
-                        starIcon();
-                        return;
+                    if (re.test(url)) {  // Regexp matches the url (this page).
+                        if (await resolveBmExistence(bmId)) {
+                            resolve(bmId);
+                            starIcon();
+                            return;
+                        } else {  // Bookmark of this rule was removed.
+                            chrome.storage.local.remove(r);  // Remove this rule.
+                        }
                     }
                 }
                 resolve("");
@@ -74,6 +88,9 @@ function resolveStatement(u) {
 }
 
 chrome.browserAction.onClicked.addListener(tab => {
+    if (tab.url.toLowerCase().startsWith("chrome://")) {
+        return;
+    }
     if (currentBmId === "") {  // Untracked series.
         alert("Open another episode in new tab to start tracking");
         anotherEpisodeTab = null;
@@ -92,7 +109,6 @@ chrome.browserAction.onClicked.addListener(tab => {
                 let re = new RegExp(r);
                 if (r !== null && re.test(url)) {
                     chrome.bookmarks.create({
-                        // parentId:,
                         title: tab.title,
                         url: tab.url
                     }, node => {
