@@ -15,10 +15,10 @@
   "browser_action": {
     "default_title": "Epimarks",
     "default_icon": {
-        "16": "icons/unstar16.png",
-        "24": "icons/unstar24.png",
-        "32": "icons/unstar32.png",
-        "64": "icons/unstar64.png"
+        "16": "icons/unbookmark16.png",
+        "24": "icons/unbookmark24.png",
+        "32": "icons/unbookmark32.png",
+        "64": "icons/unbookmark64.png"
     }
   },
   "manifest_version": 2,

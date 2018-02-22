@@ -154,10 +154,10 @@ function getSharedStart(s1, s2) {
 function starIcon() {
     chrome.browserAction.setIcon({
         path: {
-            "16": "icons/star16.png",
-            "24": "icons/star24.png",
-            "32": "icons/star32.png",
-            "64": "icons/star64.png"
+            "16": "icons/bookmark16.png",
+            "24": "icons/bookmark24.png",
+            "32": "icons/bookmark32.png",
+            "64": "icons/bookmark64.png"
         }
     });
 };
@@ -165,10 +165,10 @@ function starIcon() {
 function unstarIcon() {
     chrome.browserAction.setIcon({
         path: {
-            "16": "icons/unstar16.png",
-            "24": "icons/unstar24.png",
-            "32": "icons/unstar32.png",
-            "64": "icons/unstar64.png"
+            "16": "icons/unbookmark16.png",
+            "24": "icons/unbookmark24.png",
+            "32": "icons/unbookmark32.png",
+            "64": "icons/unbookmark64.png"
         }
     });
 };
