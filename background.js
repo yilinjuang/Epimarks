@@ -4,7 +4,7 @@
 
 let currentTabId = ""; // Current tab id of activated tab.
 let currentBmId = ""; // Current bookmark id of activated tab.
-let newTracking = {}; // Tracking new series. `windowId` and `url`.
+let newTracking = {}; // Tracking new series. `windowId`, `title` and `url`.
 
 chrome.windows.onFocusChanged.addListener((windowId) => {
     if ((!newTracking.windowId && newTracking.url) ||
@@ -104,14 +104,14 @@ chrome.browserAction.onClicked.addListener((tab) => {
     }
     if (tab.windowId === newTracking.windowId) { // Tracking window.
         let url = tab.url.toLowerCase();
-        let ss = getSharedStart(url, newTracking.url);
+        let ss = getSharedStart(url, newTracking.url.toLowerCase());
 
         // Track series!
         let re = new RegExp("^" + ss + ".*");
         if (re.test(url)) {
             chrome.bookmarks.create({
-                title: tab.title,
-                url: tab.url,
+                title: newTracking.title,
+                url: newTracking.url,
             }, (node) => {
                 let item = {};
                 item[re] = node.id;
@@ -126,7 +126,8 @@ chrome.browserAction.onClicked.addListener((tab) => {
         return;
     }
     if (currentBmId === "") { // Untracked series.
-        newTracking.url = tab.url.toLowerCase();
+        newTracking.url = tab.url;
+        newTracking.title = tab.title;
         chrome.windows.create({
             url: tab.url,
             focused: true,
@@ -135,8 +136,8 @@ chrome.browserAction.onClicked.addListener((tab) => {
             newTracking.windowId = w.id;
         });
         alert("Open another episode in this window and click Epimarks again " +
-            "to confirm.\n\nHint:\nOpen same-season episode for season" +
-            "tracking.\nOpen different-season same-series episode for series" +
+            "to confirm.\n\nHint:\nOpen same-season episode for season " +
+            "tracking.\nOpen different-season same-series episode for series " +
             "tracking.");
     } else { // Tracked series.
         console.debug("Bookmark " + currentBmId + " is updated");
