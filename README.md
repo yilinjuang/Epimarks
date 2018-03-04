@@ -22,11 +22,11 @@ Say goodbye to the dumb built-in bookmark star. Welcome Epimarks!
 2. Simply click Epimarks to keep the bookmark up-to-date! ![](assets/epimarked.png)
 
 ## Installation
-1. [Download](https://github.com/frankyjuang/Epimarks/archive/master.zip) source code as zip file.
-2. Navigate to chrome://extensions
-3. Expand the Developer dropdown menu and click “Load Unpacked Extension”
-4. Navigate to the local folder containing the extension’s code and click Ok
-5. Assuming there are no errors, the extension should load into your browser
+1. [Download](https://github.com/frankyjuang/Epimarks/archive/master.zip) source code as zip file and unzip it
+2. Navigate to `Extensions` page of Chrome (chrome://extensions)
+3. Check the `Developer mode` checkbox and click `Load unpacked extension...`
+4. Navigate to the unzipped folder containing the extension’s code and click `Select`
+5. Assuming there are no errors, Epimarks is so ready for you now
 
 ## Quick questions
 ### Why do I need to open another episode to confirm?
