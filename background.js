@@ -4,25 +4,43 @@
 
 let currentTabId = "";  // Current tab id of activated tab.
 let currentBmId = "";   // Current bookmark id of activated tab.
-let listening = false;
-let anotherEpisodeTab = null;
+let newTracking = {};   // Information for tracking new series including `windowId` and `url`.
+
+chrome.windows.onFocusChanged.addListener(windowId => {
+    if ((!newTracking.windowId && newTracking.url) || windowId === newTracking.windowId) {
+        halfableIcon();
+    } else {
+        chrome.tabs.query({
+            active: true,
+            windowId: windowId
+        }, async tabs => {
+            if (tabs.length > 1) {  // Current at abnormal window.
+                return;
+            }
+            currentTabId = tabs[0].id;
+            currentBmId = await resolveBmId(currentTabId);
+        });
+    }
+});
+
+
+chrome.windows.onRemoved.addListener(windowId => {
+    if (windowId === newTracking.windowId) {
+        newTracking = {};
+    }
+});
 
 chrome.tabs.onActivated.addListener(async function(info) {
-    if (listening) return;
+    if (info.windowId === newTracking.windowId) return;
     currentTabId = info.tabId;
     currentBmId = await resolveBmId(currentTabId);
 });
 
 chrome.tabs.onUpdated.addListener(async function(tabId, info, tab) {
-    if (listening) return;
+    if (tab.windowId === newTracking.windowId) return;
     if (tabId === currentTabId) {  // Activated tab.
         currentBmId = await resolveBmId(currentTabId);
     }
-});
-
-chrome.tabs.onCreated.addListener(tab => {
-    if (!listening) return;
-    anotherEpisodeTab = tab;
 });
 
 chrome.storage.onChanged.addListener((changes, area) => {
@@ -33,7 +51,12 @@ chrome.storage.onChanged.addListener((changes, area) => {
 function resolveBmExistence(url, bmId) {
     return new Promise(resolve => {
         chrome.bookmarks.get(bmId, nodes => {
-            if (chrome.runtime.lastError !== undefined) {
+            if (chrome.runtime.lastError) {
+                console.error(chrome.runtime.lastError.message);
+                resolve(false);
+                return;
+            }
+            if (!Array.isArray(nodes) || !nodes.length) {
                 resolve(false);
                 return;
             }
@@ -47,7 +70,7 @@ function resolveBmExistence(url, bmId) {
 
 function resolveBmId(tabId) {
     return new Promise(resolve => {
-        unstarIcon();
+        disableIcon();
         chrome.browserAction.setBadgeText({text: ""});
         chrome.tabs.get(tabId, tab => {
             console.debug(tab.url);
@@ -58,7 +81,7 @@ function resolveBmId(tabId) {
                     if (re.test(url)) {  // Regexp matches the url (this page).
                         if (await resolveBmExistence(url, bmId)) {
                             resolve(bmId);
-                            starIcon();
+                            enableIcon();
                             return;
                         } else {  // Bookmark of this rule was removed.
                             chrome.storage.local.remove(r);  // Remove this rule.
@@ -71,70 +94,41 @@ function resolveBmId(tabId) {
     });
 }
 
-function resolveStatement(u) {
-    return new Promise(resolve => {
-        let statement = "Comfirm the tracking rule\n";
-        chrome.bookmarks.search({url: u}, nodes => {  // TODO: substring search?
-            console.log(nodes);
-            if (nodes.length > 0) {
-                statement += "Also matches\n";
-                for (let n of nodes) {
-                    statement += n.title + "\n";
-                }
-            }
-            resolve(statement);
-        });
-    });
-}
-
 chrome.browserAction.onClicked.addListener(tab => {
     if (tab.url.toLowerCase().startsWith("chrome://")) {
         return;
     }
+    if (tab.windowId === newTracking.windowId) {  // Tracking window.
+        let url = tab.url.toLowerCase();
+        let ss = getSharedStart(url, newTracking.url);
+
+        // Track series!
+        let re = new RegExp("^" + ss + ".*");
+        if (re.test(url)) {
+            chrome.bookmarks.create({
+                title: tab.title,
+                url: tab.url
+            }, node => {
+                let item = {};
+                item[re] = node.id;
+                chrome.storage.local.set(item);
+            });
+        } else {
+            alert("Track failed")
+        }
+
+        chrome.windows.remove(newTracking.windowId);
+        newTracking = {};
+        return;
+    }
     if (currentBmId === "") {  // Untracked series.
-        alert("Open another episode in new tab to start tracking");
-        anotherEpisodeTab = null;
-        listening = true;
-        let checkTimes = 0;
-        let check = setInterval(async function() {
-            if (anotherEpisodeTab !== null) {
-                let url = tab.url.toLowerCase();
-                let ss = getSharedStart(url, anotherEpisodeTab.url.toLowerCase());
-
-                // Prompt for confirmation.
-                let statement = await resolveStatement(ss);
-                let r = prompt(statement, "^" + ss + ".*");
-
-                // Track series!
-                let re = new RegExp(r);
-                if (r !== null && re.test(url)) {
-                    chrome.bookmarks.create({
-                        title: tab.title,
-                        url: tab.url
-                    }, node => {
-                        let item = {};
-                        item[re] = node.id;
-                        chrome.storage.local.set(item);
-                        currentBmId = node.id;
-                        starIcon();
-                    });
-                } else {
-                    alert("Track failed")
-                }
-
-                // Stop checking.
-                chrome.tabs.remove(anotherEpisodeTab.id);
-                listening = false;
-                clearInterval(check);
-            } else {
-                checkTimes += 1;
-                if (checkTimes === 20) {
-                    // Stop checking.
-                    listening = false;
-                    clearInterval(check);
-                }
-            }
-        }, 500);
+        newTracking.url = tab.url.toLowerCase();
+        chrome.windows.create({
+            url: tab.url,
+            focused: true,
+            type: "normal"  // "popup"
+        }, w => { newTracking.windowId = w.id; });
+        alert("Open another episode in this window and click Epimarks again to confirm.\nHint: open same-season episode for season tracking. open different-season same-series episode for series tracking.");
     } else {  // Tracked series.
         console.debug("Bookmark " + currentBmId + " is updated")
         chrome.browserAction.setBadgeText({text: ""});
@@ -151,7 +145,7 @@ function getSharedStart(s1, s2) {
     return s1.substring(0, i);
 };
 
-function starIcon() {
+function enableIcon() {
     chrome.browserAction.setIcon({
         path: {
             "16": "icons/bookmark16.png",
@@ -162,7 +156,18 @@ function starIcon() {
     });
 };
 
-function unstarIcon() {
+function halfableIcon() {
+    chrome.browserAction.setIcon({
+        path: {
+            "16": "icons/halfbookmark16.png",
+            "24": "icons/halfbookmark24.png",
+            "32": "icons/halfbookmark32.png",
+            "64": "icons/halfbookmark64.png"
+        }
+    });
+};
+
+function disableIcon() {
     chrome.browserAction.setIcon({
         path: {
             "16": "icons/unbookmark16.png",
