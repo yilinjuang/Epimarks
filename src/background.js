@@ -178,35 +178,25 @@ function getSharedStart(s1, s2) {
     return s1.substring(0, i);
 }
 
-function enableIcon() {
+function changeIcon(type) {
     chrome.browserAction.setIcon({
         path: {
-            "16": "icons/bookmark16.png",
-            "24": "icons/bookmark24.png",
-            "32": "icons/bookmark32.png",
-            "64": "icons/bookmark64.png",
+            "16": "icons/" + type + "bookmark16.png",
+            "24": "icons/" + type + "bookmark24.png",
+            "32": "icons/" + type + "bookmark32.png",
+            "64": "icons/" + type + "bookmark64.png",
         },
     });
+}
+
+function enableIcon() {
+    changeIcon("");
 }
 
 function halfableIcon() {
-    chrome.browserAction.setIcon({
-        path: {
-            "16": "icons/halfbookmark16.png",
-            "24": "icons/halfbookmark24.png",
-            "32": "icons/halfbookmark32.png",
-            "64": "icons/halfbookmark64.png",
-        },
-    });
+    changeIcon("half");
 }
 
 function disableIcon() {
-    chrome.browserAction.setIcon({
-        path: {
-            "16": "icons/unbookmark16.png",
-            "24": "icons/unbookmark24.png",
-            "32": "icons/unbookmark32.png",
-            "64": "icons/unbookmark64.png",
-        },
-    });
+    changeIcon("un");
 }
