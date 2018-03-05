@@ -111,7 +111,8 @@ function resolveBmId(tabId) {
 }
 
 chrome.browserAction.onClicked.addListener((tab) => {
-    if (tab.url.toLowerCase().startsWith("chrome://")) {
+    if (!tab.url.toLowerCase().startsWith("http://") ||
+        !tab.url.toLowerCase().startsWith("https://")) {
         return;
     }
     if (tab.windowId === newTracking.windowId) { // Tracking window.
@@ -167,7 +168,7 @@ chrome.contextMenus.create({
     contexts: ["browser_action"],
     onclick: (info, tab) => {
         chrome.tabs.create({
-            url: chrome.runtime.getURL("manage.html"),
+            url: chrome.runtime.getURL("src/manage.html"),
         });
     },
 });
