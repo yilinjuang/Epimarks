@@ -2,7 +2,9 @@
   "name": "Epimarks",
   "version": "0.9",
   "description": "Easily update bookmarks of episode-like websites.",
+  "homepage_url": "https://yilinjuang.com",
   "permissions": [
+    "activeTab",
     "bookmarks",
     "contextMenus",
     "storage",
@@ -10,8 +12,9 @@
   ],
   "background": {
       "scripts": [
-          "background.js"
-      ]
+          "src/background.js"
+      ],
+      "persistent": true
   },
   "browser_action": {
     "default_title": "Epimarks",

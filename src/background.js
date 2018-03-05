@@ -1,6 +1,6 @@
 "use strict";
 
-// TODO: right-click edit/remove rule, rule page
+// TODO: rule page, replace alert with pure js modal
 
 let currentTabId = ""; // Current tab id of activated tab.
 let currentBmId = ""; // Current bookmark id of activated tab.
@@ -14,7 +14,7 @@ chrome.windows.onFocusChanged.addListener((windowId) => {
         chrome.tabs.query({
             active: true,
             windowId: windowId,
-        }, async function(tabs) {
+        }, async (tabs) => {
             if (tabs.length > 1) { // Current at abnormal window.
                 return;
             }
@@ -31,13 +31,13 @@ chrome.windows.onRemoved.addListener((windowId) => {
     }
 });
 
-chrome.tabs.onActivated.addListener(async function(info) {
+chrome.tabs.onActivated.addListener(async (info) => {
     if (info.windowId === newTracking.windowId) return;
     currentTabId = info.tabId;
     currentBmId = await resolveBmId(currentTabId);
 });
 
-chrome.tabs.onUpdated.addListener(async function(tabId, info, tab) {
+chrome.tabs.onUpdated.addListener(async (tabId, info, tab) => {
     if (tab.windowId === newTracking.windowId) return;
     if (tabId === currentTabId) { // Activated tab.
         currentBmId = await resolveBmId(currentTabId);
@@ -147,6 +147,19 @@ chrome.browserAction.onClicked.addListener((tab) => {
             url: tab.url,
         });
     }
+});
+
+chrome.contextMenus.create({
+    title: "Manage your marks",
+    contexts: ["browser_action"],
+    onclick: (info, tab) => {
+        chrome.tabs.executeScript(tab.id, {
+            file: 'src/modal.js',
+        });
+        // chrome.tabs.create({
+            // url: chrome.runtime.getURL("manage.html"),
+        // });
+    },
 });
 
 function getSharedStart(s1, s2) {
