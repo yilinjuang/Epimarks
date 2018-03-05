@@ -6,6 +6,19 @@ let currentTabId = ""; // Current tab id of activated tab.
 let currentBmId = ""; // Current bookmark id of activated tab.
 let newTracking = {}; // Tracking new series. `windowId`, `title` and `url`.
 
+chrome.runtime.onMessage.addListener((msg, sender, response) => {
+    if (msg.hintClosed) {
+        chrome.windows.create({
+            url: newTracking.url,
+            focused: true,
+            type: "normal", // "popup"
+        }, (w) => {
+            newTracking.windowId = w.id;
+        });
+    } else {
+        console.info("Received unknown message.");
+    }
+});
 chrome.windows.onFocusChanged.addListener((windowId) => {
     if ((!newTracking.windowId && newTracking.url) ||
             windowId === newTracking.windowId) {
@@ -23,7 +36,6 @@ chrome.windows.onFocusChanged.addListener((windowId) => {
         });
     }
 });
-
 
 chrome.windows.onRemoved.addListener((windowId) => {
     if (windowId === newTracking.windowId) {
@@ -128,17 +140,18 @@ chrome.browserAction.onClicked.addListener((tab) => {
     if (currentBmId === "") { // Untracked series.
         newTracking.url = tab.url;
         newTracking.title = tab.title;
-        chrome.windows.create({
-            url: tab.url,
-            focused: true,
-            type: "normal", // "popup"
-        }, (w) => {
-            newTracking.windowId = w.id;
+        // Hint!
+        chrome.tabs.executeScript(tab.id, {
+            file: 'src/tingle.min.js',
+        }, () => {
+            chrome.tabs.insertCSS(tab.id, {
+                file: 'src/tingle.min.css',
+            }, () => {
+                chrome.tabs.executeScript(tab.id, {
+                    file: "src/hint.js",
+                });
+            });
         });
-        alert("Open another episode in this window and click Epimarks again " +
-            "to confirm.\n\nHint:\nOpen same-season episode for season " +
-            "tracking.\nOpen different-season same-series episode for series " +
-            "tracking.");
     } else { // Tracked series.
         console.debug("Bookmark " + currentBmId + " is updated");
         chrome.browserAction.setBadgeText({text: ""});
@@ -153,12 +166,9 @@ chrome.contextMenus.create({
     title: "Manage your marks",
     contexts: ["browser_action"],
     onclick: (info, tab) => {
-        chrome.tabs.executeScript(tab.id, {
-            file: 'src/modal.js',
+        chrome.tabs.create({
+            url: chrome.runtime.getURL("manage.html"),
         });
-        // chrome.tabs.create({
-            // url: chrome.runtime.getURL("manage.html"),
-        // });
     },
 });
 
