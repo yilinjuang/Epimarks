@@ -147,10 +147,10 @@ chrome.browserAction.onClicked.addListener((tab) => {
         newTracking.title = tab.title;
         // Hint!
         chrome.tabs.executeScript(tab.id, {
-            file: 'src/tingle.min.js',
+            file: "src/tingle.min.js",
         }, () => {
             chrome.tabs.insertCSS(tab.id, {
-                file: 'src/tingle.min.css',
+                file: "src/tingle.min.css",
             }, () => {
                 chrome.tabs.executeScript(tab.id, {
                     file: "src/hint.js",

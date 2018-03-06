@@ -20,15 +20,14 @@ function newIcon(type) {
     d.innerText = type;
     d.addEventListener("click", (e) => {
         let clickedType = e.target.innerText;
+        let matchRule = e.target.parentElement.previousElementSibling;
+        let reStr = matchRule.title;
         if (clickedType === "edit") {
-            let matchRule = e.target.parentElement.previousElementSibling;
-            let bmLink = matchRule.previousElementSibling.title;
-            let reStr = matchRule.title;
-
             let newReStr = prompt("Edit Match Rule (RegEx)", reStr);
             if (newReStr === reStr) { // Unchanged.
                 return;
             }
+            let bmLink = matchRule.previousElementSibling.title;
             let newRe = new RegExp(newReStr.substring(1, newReStr.length-1));
             if (newRe.test(bmLink)) { // Check if new match rule fits bookmark.
                 // Update match rule to storage. Delete first and insert again.
@@ -48,7 +47,7 @@ function newIcon(type) {
                 alert("Edit failed. New rule doesn't match bookmark link.");
             }
         } else if (clickedType === "delete") {
-            chrome.storage.local.remove(re, () => {
+            chrome.storage.local.remove(reStr, () => {
                 if (chrome.runtime.lastError) { // Failed to remove.
                     alert("Something went wrong...Try again later");
                     return;
