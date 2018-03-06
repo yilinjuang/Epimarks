@@ -2,32 +2,32 @@ module.exports = {
     "env": {
         "browser": true,
         "es6": true,
-        "webextensions": true
+        "webextensions": true,
     },
-    // "extends": "eslint:recommended",
-    'extends': ['eslint:recommended', 'google'],  // Use Google coding styles.
+    "extends": ["eslint:recommended", "google"],
     "parserOptions": {
         "ecmaVersion": 2017,
-        "sourceType": "module"
+        "sourceType": "module",
     },
+    "plugins": ["html"],
     "rules": {
         "indent": [
             "error",
-            4
+            4,
         ],
         "linebreak-style": [
             "error",
-            "unix"
+            "unix",
         ],
-        'no-console': 'off',
-        'require-jsdoc': 'off',
+        "no-console": "off",
+        "require-jsdoc": "off",
         "quotes": [
             "error",
-            "double"
+            "double",
         ],
         "semi": [
             "error",
-            "always"
-        ]
-    }
+            "always",
+        ],
+    },
 };
