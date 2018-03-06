@@ -13,18 +13,16 @@ body {
 table {
   text-align: left;
   line-height: 40px;
-  border-spacing: 0;
   width: 500px;
   margin: 50px auto;
-  border-radius: 0.25rem;
   background-color: #fff;
+  border-collapse: collapse;
   box-shadow: 0 2px 5px 1px rgba(0, 0, 0, 0.05);
 }
 
 thead tr:first-child {
   background: #ffd000;
   color: #fff;
-  border: none;
   font-size: 1.5rem;
 }
 
