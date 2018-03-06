@@ -1,6 +1,6 @@
 "use strict";
 
-// TODO: rule page, replace alert with pure js modal
+// TODO: minimized font file, take care runtime.lastError
 
 let currentTabId = ""; // Current tab id of activated tab.
 let currentBmId = ""; // Current bookmark id of activated tab.
@@ -16,7 +16,7 @@ chrome.runtime.onMessage.addListener((msg, sender, response) => {
             newTracking.windowId = w.id;
         });
     } else {
-        console.info("Received unknown message.");
+        console.info("Received unknown message:", msg);
     }
 });
 chrome.windows.onFocusChanged.addListener((windowId) => {
@@ -57,8 +57,7 @@ chrome.tabs.onUpdated.addListener(async (tabId, info, tab) => {
 });
 
 chrome.storage.onChanged.addListener((changes, area) => {
-    console.debug(area + " changed");
-    console.debug(changes);
+    console.debug(area, "changed:", changes);
 });
 
 function resolveBmExistence(url, bmId) {
@@ -88,6 +87,11 @@ function resolveBmId(tabId) {
         disableIcon();
         chrome.browserAction.setBadgeText({text: ""});
         chrome.tabs.get(tabId, (tab) => {
+            if (chrome.runtime.lastError) { // Tab closed before resolved.
+                console.error(chrome.runtime.lastError.message);
+                resolve("");
+                return;
+            }
             console.debug(tab.url);
             let url = tab.url.toLowerCase();
             chrome.storage.local.get(null, async function(items) {
@@ -111,7 +115,7 @@ function resolveBmId(tabId) {
 }
 
 chrome.browserAction.onClicked.addListener((tab) => {
-    if (!tab.url.toLowerCase().startsWith("http://") ||
+    if (!tab.url.toLowerCase().startsWith("http://") &&
         !tab.url.toLowerCase().startsWith("https://")) {
         return;
     }
@@ -131,7 +135,7 @@ chrome.browserAction.onClicked.addListener((tab) => {
                 chrome.storage.local.set(item);
             });
         } else {
-            alert("Track failed");
+            alert("Something went wrong...Try again later");
         }
 
         chrome.windows.remove(newTracking.windowId);
@@ -154,7 +158,7 @@ chrome.browserAction.onClicked.addListener((tab) => {
             });
         });
     } else { // Tracked series.
-        console.debug("Bookmark " + currentBmId + " is updated");
+        console.debug("Bookmark", currentBmId, "is updated");
         chrome.browserAction.setBadgeText({text: ""});
         chrome.bookmarks.update(currentBmId, {
             title: tab.title,
@@ -164,7 +168,7 @@ chrome.browserAction.onClicked.addListener((tab) => {
 });
 
 chrome.contextMenus.create({
-    title: "Manage your marks",
+    title: "Manage my marks",
     contexts: ["browser_action"],
     onclick: (info, tab) => {
         chrome.tabs.create({

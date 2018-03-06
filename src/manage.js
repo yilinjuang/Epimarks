@@ -5,25 +5,71 @@ function limitStr(s, n) {
     return s;
 }
 
-function addCell(row, content, maxLength) {
+function addCell(row, content, maxLength, bmId) {
     let c = row.insertCell();
     c.appendChild(document.createTextNode(limitStr(content, maxLength)));
     c.title = content;
+    if (bmId !== undefined) { // Store bmId with cell match rule.
+        c.dataset.bmId = bmId;
+    }
 }
 
 function newIcon(type) {
     let d = document.createElement("i");
     d.className = "material-icons button " + type;
     d.innerText = type;
+    d.addEventListener("click", (e) => {
+        let clickedType = e.target.innerText;
+        if (clickedType === "edit") {
+            let matchRule = e.target.parentElement.previousElementSibling;
+            let bmLink = matchRule.previousElementSibling.title;
+            let reStr = matchRule.title;
+
+            let newReStr = prompt("Edit Match Rule (RegEx)", reStr);
+            if (newReStr === reStr) { // Unchanged.
+                return;
+            }
+            let newRe = new RegExp(newReStr.substring(1, newReStr.length-1));
+            if (newRe.test(bmLink)) { // Check if new match rule fits bookmark.
+                // Update match rule to storage. Delete first and insert again.
+                chrome.storage.local.remove(reStr, () => {
+                    if (chrome.runtime.lastError) { // Failed to remove.
+                        alert("Something went wrong...Try again later");
+                        return;
+                    }
+                    let item = {};
+                    item[newReStr] = matchRule.dataset.bmId;
+                    chrome.storage.local.set(item);
+                    // Update table UI.
+                    matchRule.innerText = limitStr(newReStr, 30);
+                    matchRule.title = newReStr;
+                });
+            } else {
+                alert("Edit failed. New rule doesn't match bookmark link.");
+            }
+        } else if (clickedType === "delete") {
+            chrome.storage.local.remove(re, () => {
+                if (chrome.runtime.lastError) { // Failed to remove.
+                    alert("Something went wrong...Try again later");
+                    return;
+                }
+                // Update table UI.
+                let row = e.target.parentElement.parentElement;
+                row.parentElement.removeChild(row);
+            });
+        } else {
+            console.info("Unknown rule operation:", clickedType);
+        }
+    });
     return d;
 }
 
-function fillOutTable(name, link, rule) {
+function fillOutTable(name, link, rule, bmId) {
     let t = document.getElementById("rules");
     let r = t.insertRow();
     addCell(r, name, 15);
     addCell(r, link, 30);
-    addCell(r, rule, 30);
+    addCell(r, rule, 30, bmId);
     let iconCell = r.insertCell();
     iconCell.appendChild(newIcon("edit"));
     iconCell.appendChild(newIcon("delete"));
@@ -31,20 +77,22 @@ function fillOutTable(name, link, rule) {
 
 (function() {
     chrome.storage.local.get(null, (rules) => {
-        for (let re in rules) {
-            if (rules.hasOwnProperty(re)) {
-                let bmId = rules[re];
-                chrome.bookmarks.get(bmId, (nodes) => {
-                    if (chrome.runtime.lastError) {
-                        console.error(chrome.runtime.lastError.message);
-                        return;
-                    }
-                    if (!Array.isArray(nodes) || !nodes.length) {
-                        return;
-                    }
-                    fillOutTable(nodes[0].title, nodes[0].url, re);
-                });
-            }
+        if (chrome.runtime.lastError) { // Failed to retrieve.
+            alert("Something went wrong...Try again later");
+            console.error(chrome.runtime.lastError.message);
+            return;
+        }
+        for (let [re, bmId] of Object.entries(rules)) {
+            chrome.bookmarks.get(bmId, (nodes) => {
+                if (chrome.runtime.lastError) {
+                    console.error(chrome.runtime.lastError.message);
+                    return;
+                }
+                if (!Array.isArray(nodes) || !nodes.length) {
+                    return;
+                }
+                fillOutTable(nodes[0].title, nodes[0].url, re, bmId);
+            });
         }
     });
 })();
