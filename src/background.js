@@ -183,7 +183,7 @@ chrome.browserAction.onClicked.addListener((tab) => {
 });
 
 chrome.contextMenus.create({
-    title: "Manage my marks",
+    title: "Manage My Epimarks",
     contexts: ["browser_action"],
     onclick: (info, tab) => {
         chrome.tabs.create({
