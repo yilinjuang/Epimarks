@@ -7,11 +7,20 @@
             chrome.runtime.sendMessage({hintClosed: true});
         },
     });
-    modal.setContent(`<div style="font-family: 'Varela Round', sans-serif;">
-<h1>Almost Done!</h1>
-<h3>Open another episode in this window and click Epimarks again to confirm.</h3>
-<p>Hint: Open <i>same-season</i> episode for season tracking.</p>
-<p>Open <i>different-season but same-series</i> episode for series tracking.</p>
-</div>`);
+    let generalCss = "display:block;padding:0;font-family:sans-serif";
+    modal.setContent(`
+<h1 style="${generalCss};font-size:2em;margin:0.67em 0;font-weight:bold;">
+    Almost Done!
+</h1>
+<h3 style="${generalCss};font-size:1.17em;margin:1em 0;font-weight:bold;">
+    Open another episode in this window and click Epimarks again to confirm.
+</h3>
+<p style="${generalCss};margin:0;">
+    Hint: Open <i>same-season</i> episode for season tracking.
+</p>
+<p style="${generalCss};margin:0;">
+    Open <i>different-season but same-series</i> episode for series tracking.
+</p>
+`);
     modal.open();
 })();
