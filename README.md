@@ -22,6 +22,12 @@ Say goodbye to the dumb built-in bookmark star. Welcome Epimarks!
 2. Simply click Epimarks to keep the bookmark up-to-date! ![](assets/epimarked.png)
 
 ## Installation
+### Direct install from Chrome Web Store
+1. Go [here](https://chrome.google.com/webstore/detail/epimarks/gokncocnklmolflmepaikggblcgcgjoo).
+2. Click ADD TO CHROME.
+3. Give us 5-star under REVIEWS if you find Epimarks useful!
+
+### Manual install from source code
 1. [Download](https://github.com/frankyjuang/Epimarks/archive/master.zip) source code as zip file and unzip it
 2. Navigate to `Extensions` page of Chrome (chrome://extensions)
 3. Check the `Developer mode` checkbox and click `Load unpacked extension...`
@@ -34,3 +40,6 @@ With two episodes, Epimarks now knows which series you want to follow!
 
 ### Where are all my episodes stored?
 In the folder _Other Bookmarks_! Head there and resume your watching NOW!
+
+### How can I edit or delete my epimarked series?
+Right-click on Epimarks => Manage My Epimarks. Here you are!
