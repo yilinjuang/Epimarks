@@ -1,7 +1,5 @@
 "use strict";
 
-// TODO: minimized font file, take care runtime.lastError
-
 let currentTabId = ""; // Current tab id of activated tab.
 let currentBmId = ""; // Current bookmark id of activated tab.
 let newTracking = {}; // Tracking new series. `windowId`, `title` and `url`.
@@ -150,6 +148,10 @@ chrome.browserAction.onClicked.addListener((tab) => {
         chrome.tabs.executeScript(tab.id, {
             file: "src/tingle.min.js",
         }, () => {
+            if (chrome.runtime.lastError) {
+                console.error(chrome.runtime.lastError.message);
+                return;
+            }
             chrome.tabs.insertCSS(tab.id, {
                 file: "src/tingle.min.css",
             }, () => {
@@ -159,11 +161,23 @@ chrome.browserAction.onClicked.addListener((tab) => {
             });
         });
     } else { // Tracked series.
-        console.debug("Bookmark", currentBmId, "is updated");
-        chrome.browserAction.setBadgeText({text: ""});
-        chrome.bookmarks.update(currentBmId, {
-            title: tab.title,
-            url: tab.url,
+        chrome.browserAction.getBadgeText({}, (text) => {
+            if (text === "") { // Already up-to-date.
+                return;
+            }
+            chrome.browserAction.setBadgeText({text: ""});
+            chrome.bookmarks.update(currentBmId, {
+                title: tab.title,
+                url: tab.url,
+            }, (bm) => {
+                if (chrome.runtime.lastError) { // Bookmark was removed.
+                    console.log(chrome.runtime.lastError.message);
+                    disableIcon();
+                    currentBmId = "";
+                    return;
+                }
+                console.debug("Bookmark", currentBmId, "is updated");
+            });
         });
     }
 });
