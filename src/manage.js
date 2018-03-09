@@ -16,7 +16,7 @@ function addCell(row, content, maxLength, bmId) {
 
 function newIcon(type) {
     let d = document.createElement("i");
-    d.className = "material-icons button " + type;
+    d.className = "epifont-icons button " + type;
     d.innerText = type;
     d.addEventListener("click", (e) => {
         let clickedType = e.target.innerText;
@@ -24,7 +24,7 @@ function newIcon(type) {
         let reStr = matchRule.title;
         if (clickedType === "edit") {
             let newReStr = prompt("Edit Match Rule (RegEx)", reStr);
-            if (newReStr === reStr) { // Unchanged.
+            if (!newReStr || newReStr === reStr) { // Cancelled or unchanged.
                 return;
             }
             let bmLink = matchRule.previousElementSibling.title;

@@ -11,7 +11,7 @@ chrome.runtime.onMessage.addListener((msg, sender, response) => {
         chrome.windows.create({
             url: newTracking.url,
             focused: true,
-            type: "normal", // "popup"
+            type: "normal",
         }, (w) => {
             newTracking.windowId = w.id;
         });
@@ -19,6 +19,7 @@ chrome.runtime.onMessage.addListener((msg, sender, response) => {
         console.info("Received unknown message:", msg);
     }
 });
+
 chrome.windows.onFocusChanged.addListener((windowId) => {
     if ((!newTracking.windowId && newTracking.url) ||
             windowId === newTracking.windowId) {
